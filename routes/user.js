@@ -18,7 +18,9 @@ var Tally = function Tally() {
 	};
 
 	this.getAll = function() {
-		return _.compact(data);
+		return _(data).omit(function(val){
+			return !val;
+		}).keys().value();
 	};
 };
 
@@ -30,9 +32,17 @@ exports.list = function(req, res){
 
 exports.push = function(req, res){
 	var user = req.body.user;
-	db.set(user.name, user.status);
+	if (!user) {
+		res.send(412, {error: 412, message: 'No user was found in request body'});
+	} else {
+		for(var name in user){
+			db.set(name, user[name]);
+		}
+		res.send(200);
+	}
 };
 
-exports.clearAll = function(){
+exports.clearAll = function(req, res){
 	db.clear();
+	res.send(200);
 };

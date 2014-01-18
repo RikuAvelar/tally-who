@@ -103,6 +103,36 @@ describe('User Tally', function(){
 			});
 		});
 
+		it('should be able to push multiple users to the Tally', function(done){
+			request(app).post('/').send({secret: 'testMode', user: {
+				'Rufus the Second': true,
+				'Reginald Esquire': true,
+				'Rufus the First Jr.': true
+			}}).end(function(){
+				request(app).get('/')
+					.set('Accept', 'application/json')
+					.expect(200)
+					.end(function(err, res){
+						if(err){
+							done(err);
+						} else {
+							try{
+								res.should.be.json;
+								res.body.should.be.an.Array;
+								res.body.should.have.length(4);
+								res.body[0].should.equal('Rufus the First');
+								res.body[1].should.equal('Rufus the Second');
+								res.body[2].should.equal('Reginald Esquire');
+								res.body[3].should.equal('Rufus the First Jr.');
+								done();
+							} catch (e) {
+								done(e);
+							}
+						}
+					});
+			});
+		});
+
 		it('should update existing users', function(done){
 			var firstRequest = function(callback) {
 				request(app).post('/').send({secret: 'testMode', user: {'Rufus the First': true}}).expect(200).end(function(){

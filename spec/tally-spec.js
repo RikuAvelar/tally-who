@@ -9,16 +9,16 @@ app.set('secret', 'testMode');
 
 describe('User Tally', function(){
 	afterEach(function(done){
-		request(app).del('/').send({secret: 'testMode'}).end(done);
+		request(app).del('/').set('X-Auth-Token', 'testMode').end(done);
 	});
 
 	beforeEach(function(done){
-		request(app).post('/').send({secret: 'testMode', user: {'Rufus the First': true}}).end(done);
+		request(app).post('/').set('X-Auth-Token', 'testMode').send({name: 'Rufus the First', status: 'Start'}).end(done);
 	});
 
 	describe('GET /', function(){
 		before(function(done){
-			request(app).post('/').send({secret: 'testMode', user: {'Rufus the Second': false}}).end(done);
+			request(app).post('/').set('X-Auth-Token', 'testMode').send({name: 'Rufus the Second', status: 'Stop'}).end(done);
 		});
 		it('should respond with an array of online users', function(done){
 			request(app).get('/')
@@ -45,12 +45,12 @@ describe('User Tally', function(){
 	describe('DELETE /', function(){
 		it('should respond with 403 when an incorrect or no secret is sent', function(done){
 			request(app).del('/').expect(403).end(function(){
-				request(app).del('/', {secret: 'wrongSecret'}).expect(403, done);
+				request(app).del('/').set('X-Auth-Token', 'wrongSecret').expect(403, done);
 			});
 		});
 
 		it('should clear the Tally when the correct secret is sent', function(done){
-			request(app).del('/').send({secret: 'testMode'}).end(function(){
+			request(app).del('/').set('X-Auth-Token', 'testMode').end(function(){
 				request(app).get('/')
 					.set('Accept', 'application/json')
 					.expect(200)
@@ -74,13 +74,13 @@ describe('User Tally', function(){
 
 	describe('POST /', function(){
 		it('should respond with 403 when an incorrect of no secret is sent', function(done){
-			request(app).post('/').send({user: {'Rufus the Second': true}}).expect(403).end(function(){
-				request(app).post('/').send({secret: 'wrongSecret', user: {'Rufus the Second': true}}).expect(403, done);
+			request(app).post('/').send({name: 'Rufus the Second', status: 'Start'}).expect(403).end(function(){
+				request(app).post('/').set('X-Auth-Token', 'wrongSecret').send({name: 'Rufus the Second', status: 'Start'}).expect(403, done);
 			});
 		});
 
 		it('should push a new User to the Tally', function(done){
-			request(app).post('/').send({secret: 'testMode', user: {'Rufus the Second': true}}).end(function(){
+			request(app).post('/').set('X-Auth-Token', 'testMode').send({name: 'Rufus the Second', status: 'Start'}).end(function(){
 				request(app).get('/')
 					.set('Accept', 'application/json')
 					.expect(200)
@@ -103,39 +103,9 @@ describe('User Tally', function(){
 			});
 		});
 
-		it('should be able to push multiple users to the Tally', function(done){
-			request(app).post('/').send({secret: 'testMode', user: {
-				'Rufus the Second': true,
-				'Reginald Esquire': true,
-				'Rufus the First Jr.': true
-			}}).end(function(){
-				request(app).get('/')
-					.set('Accept', 'application/json')
-					.expect(200)
-					.end(function(err, res){
-						if(err){
-							done(err);
-						} else {
-							try{
-								res.should.be.json;
-								res.body.should.be.an.Array;
-								res.body.should.have.length(4);
-								res.body[0].should.equal('Rufus the First');
-								res.body[1].should.equal('Rufus the Second');
-								res.body[2].should.equal('Reginald Esquire');
-								res.body[3].should.equal('Rufus the First Jr.');
-								done();
-							} catch (e) {
-								done(e);
-							}
-						}
-					});
-			});
-		});
-
 		it('should update existing users', function(done){
 			var firstRequest = function(callback) {
-				request(app).post('/').send({secret: 'testMode', user: {'Rufus the First': true}}).expect(200).end(function(){
+				request(app).post('/').set('X-Auth-Token', 'testMode').send({name: 'Rufus the First', status: 'Start'}).expect(200).end(function(){
 					request(app).get('/')
 						.set('Accept', 'application/json')
 						.expect(200)
@@ -160,7 +130,7 @@ describe('User Tally', function(){
 				if(err) {
 					done(err);
 				} else {
-					request(app).post('/').send({secret: 'testMode', user: {'Rufus the First': false}}).expect(200).end(function(){
+					request(app).post('/').set('X-Auth-Token', 'testMode').send({name: 'Rufus the First', status:'Stop'}).expect(200).end(function(){
 						request(app).get('/')
 							.set('Accept', 'application/json')
 							.expect(200)

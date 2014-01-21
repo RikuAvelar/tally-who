@@ -11,7 +11,7 @@ var Tally = function Tally() {
 		return data.key;
 	};
 	this.set = function(key, val) {
-		data[key] = val;
+		data[key] = (val == 'Start' ? true : false);
 	};
 	this.clear = function() {
 		data = {};
@@ -31,13 +31,11 @@ exports.list = function(req, res){
 };
 
 exports.push = function(req, res){
-	var user = req.body.user;
-	if (!user) {
+	var user = req.body;
+	if (!user.name) {
 		res.send(412, {error: 412, message: 'No user was found in request body'});
 	} else {
-		for(var name in user){
-			db.set(name, user[name]);
-		}
+		db.set(user.name, user.status);
 		res.send(200);
 	}
 };

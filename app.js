@@ -33,6 +33,17 @@ app.del('/', user.clearAll);
 if(!module.parent) {
   app.listen(app.get('port'), function () {
       console.log("Express server listening on port %d in %s mode", app.get('port'), app.settings.env);
+      if(process && process.send){
+        process.send('online');
+      }
+  });
+}
+
+if(process && process.on){
+  process.on('message', function(msg){
+    if(msg === 'shutdown'){
+      process.exit(0);
+    }
   });
 }
 
